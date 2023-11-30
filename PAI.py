@@ -1,6 +1,7 @@
 ## COM DISTÂNCIA E JANELINHA E N
 
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import pandas as pd
@@ -22,7 +23,19 @@ bethesda_var.set("Bethesda: ")
 n_var = tk.StringVar()
 n_var.set(str(N))  # Inicializa o widget de entrada com o valor padrão
 
+def create_results_table(root):
+    columns = ('image_id', 'area', 'perimeter', 'circularity', 'eccentricity', 'compactness')
+    results_table = ttk.Treeview(root, columns=columns, show='headings')
+    results_table.heading('image_id', text='ID da Imagem')
+    results_table.heading('area', text='Área')
+    results_table.heading('perimeter', text='Perímetro')
+    results_table.heading('circularity', text='Circularidade')
+    results_table.heading('eccentricity', text='Excentricidade')
+    results_table.heading('compactness', text='Compacidade')
+    return results_table
 
+def update_results_table(table, image_id, area, perimeter, circularity, eccentricity, compactness):
+    table.insert('', tk.END, values=(image_id, area, perimeter, circularity, eccentricity, compactness))
 
 def calculate_shape_descriptors(image):
     # Convertendo a imagem para escala de cinza e binarizando
@@ -45,14 +58,14 @@ def calculate_shape_descriptors(image):
         (x, y), (minor_axis, major_axis), angle = cv2.fitEllipse(contour)
         eccentricity = np.sqrt(1 - (minor_axis / major_axis) ** 2) if major_axis != 0 else 0
 
-        return area, perimeter, circularity, eccentricity
-    else:
-        return None, None, None, None
+        compactness = (4 * np.pi * area) / (perimeter * perimeter) if perimeter != 0 else 0
 
+        return area, perimeter, circularity, eccentricity, compactness
+    else:
+        return None, None, None, None, None
 
 def calculate_distance(x1, y1, x2, y2):
     return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
-
 
 def open_image():
     global img_path
@@ -125,9 +138,12 @@ def process_image(show_class=False):
 
 
                     # Calcular descritores de forma
-                    area, perimeter, circularity, eccentricity = calculate_shape_descriptors(cropped_img)
+                    area, perimeter, circularity, eccentricity, compactness = calculate_shape_descriptors(cropped_img)
+                   
                     if area is not None and perimeter is not None:
-                        print(f"Área: {area} milímetros, Perímetro: {perimeter} milímetros, Circularidade: {circularity}, Excentricidade: {eccentricity}")
+                        print(f"Área: {area} milímetros, Perímetro: {perimeter} milímetros, Circularidade: {circularity}, Excentricidade: {eccentricity}, Compacidade: {compactness}")
+                        image_id = row['image_id']
+                        update_results_table(results_table, image_id, area, perimeter, circularity, eccentricity, compactness)
 
                     # Calculando os novos valores de x e y para fazer a distância
                     new_x = cropped_img.width // 2
@@ -155,7 +171,7 @@ def process_image(show_class=False):
                         show_class_label.pack()
 
                     # Mostra a janela com os resultados
-                    show_results_window(area, perimeter, circularity, eccentricity, distance_to_center)
+                    show_results_window(area, perimeter, circularity, eccentricity, compactness, distance_to_center)
 
                     break
 
@@ -163,7 +179,7 @@ def process_image(show_class=False):
 def show_class():
     process_image(show_class=True)
 
-def show_results_window(area, perimeter, circularity, eccentricity, distance_to_center):
+def show_results_window(area, perimeter, circularity, eccentricity, compactness, distance_to_center):
     results_window = tk.Toplevel(root)
     results_window.title("Resultados")
     # Rótulos para os resultados
@@ -175,6 +191,9 @@ def show_results_window(area, perimeter, circularity, eccentricity, distance_to_
 
     circularity_label = tk.Label(results_window, text=f"Circularidade: {circularity}")
     circularity_label.pack()
+
+    compactness_label = tk.Label(results_window, text=f"Compacidade: {compactness}")
+    compactness_label.pack()
 
     eccentricity_label = tk.Label(results_window, text=f"Excentricidade: {eccentricity}")
     eccentricity_label.pack()
@@ -206,13 +225,11 @@ n_entry.pack(side=tk.LEFT)
 zoom_slider = tk.Scale(root, from_=1, to=5, orient=tk.HORIZONTAL, resolution=0.1, command=update_zoom)
 zoom_slider.pack()
 
-# Botão para mostrar a classe
-show_class_button = tk.Button(button_frame, text="Bethesda", command=show_class)
-show_class_button.pack(side=tk.LEFT)
-show_class_label = tk.Label(root, textvariable=bethesda_var)
-
 # Label para mostrar a distância
 distance_label = tk.Label(root)
+
+results_table = create_results_table(root)
+results_table.pack(fill=tk.BOTH, expand=True)
 
 root.mainloop()
 
