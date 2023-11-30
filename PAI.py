@@ -8,6 +8,8 @@ import pandas as pd
 import os
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Variáveis globais
 img_path = None
@@ -23,6 +25,40 @@ bethesda_var.set("Bethesda: ")
 n_var = tk.StringVar()
 n_var.set(str(N))  # Inicializa o widget de entrada com o valor padrão
 
+def plot_scatter_graph():
+    # Lendo os dados da tabela
+    area_values = []
+    eccentricity_values = []
+    class_colors = {
+        'ASC-US': 'blue',
+        'ASC-H': 'green',
+        'LSIL': 'yellow',
+        'HSIL': 'orange',
+        'SCC': 'red',
+        'Negative for intraepithelial lesion': 'black'
+    }
+    colors = []
+
+    for child in results_table.get_children():
+        data = results_table.item(child)['values']
+        area_values.append(data[1])
+        eccentricity_values.append(data[4])
+        nucleus_class = data[6]  # Classe do núcleo armazenada na tabela
+        colors.append(class_colors.get(nucleus_class))
+
+    # Criando a figura do Matplotlib
+    fig, ax = plt.subplots()
+    ax.scatter(area_values, eccentricity_values, c=colors)
+
+    ax.set_xlabel('Área (cm²)')
+    ax.set_ylabel('Excentricidade')
+    ax.set_title('Gráfico de Dispersão das Características dos Núcleos')
+
+    # Integrando o gráfico com Tkinter
+    canvas = FigureCanvasTkAgg(fig, master=root)  # A 'root' é a janela principal do Tkinter
+    canvas_widget = canvas.get_tk_widget()
+    canvas_widget.pack()
+
 def create_results_table(root):
     columns = ('image_id', 'area', 'perimeter', 'circularity', 'eccentricity', 'compactness')
     results_table = ttk.Treeview(root, columns=columns, show='headings')
@@ -34,8 +70,17 @@ def create_results_table(root):
     results_table.heading('compactness', text='Compacidade')
     return results_table
 
-def update_results_table(table, image_id, area, perimeter, circularity, eccentricity, compactness):
-    table.insert('', tk.END, values=(image_id, area, perimeter, circularity, eccentricity, compactness))
+def update_results_table(table, image_id, area, perimeter, circularity, eccentricity, compactness, nucleus_class):
+    # Adiciona a classe do núcleo como um item oculto no final
+    table.insert('', tk.END, values=(
+        image_id, 
+        f"{area:.4f} cm²", 
+        f"{perimeter:.4f} cm", 
+        f"{circularity:.4f}", 
+        f"{eccentricity:.4f}", 
+        f"{compactness:.4f}",
+        nucleus_class  # Classe do núcleo
+    ))
 
 def calculate_shape_descriptors(image):
     # Convertendo a imagem para escala de cinza e binarizando
@@ -60,7 +105,13 @@ def calculate_shape_descriptors(image):
 
         compactness = (4 * np.pi * area) / (perimeter * perimeter) if perimeter != 0 else 0
 
-        return area, perimeter, circularity, eccentricity, compactness
+        area_cm = round(area / 100, 4)
+        perimeter_cm = round(perimeter / 100, 4)
+        circularity = round(circularity, 4)
+        eccentricity = round(eccentricity, 4)
+        compactness = round(compactness, 4)
+
+        return area_cm, perimeter_cm, circularity, eccentricity, compactness
     else:
         return None, None, None, None, None
 
@@ -143,7 +194,7 @@ def process_image(show_class=False):
                     if area is not None and perimeter is not None:
                         print(f"Área: {area} milímetros, Perímetro: {perimeter} milímetros, Circularidade: {circularity}, Excentricidade: {eccentricity}, Compacidade: {compactness}")
                         image_id = row['image_id']
-                        update_results_table(results_table, image_id, area, perimeter, circularity, eccentricity, compactness)
+                        update_results_table(results_table, image_id, area, perimeter, circularity, eccentricity, compactness, img_class)
 
                     # Calculando os novos valores de x e y para fazer a distância
                     new_x = cropped_img.width // 2
@@ -183,22 +234,22 @@ def show_results_window(area, perimeter, circularity, eccentricity, compactness,
     results_window = tk.Toplevel(root)
     results_window.title("Resultados")
     # Rótulos para os resultados
-    area_label = tk.Label(results_window, text=f"Área: {area} milímetros")
+    area_label = tk.Label(results_window, text=f"Área: {area:.4f} cm²")
     area_label.pack()
 
-    perimeter_label = tk.Label(results_window, text=f"Perímetro: {perimeter} milímetros")
+    perimeter_label = tk.Label(results_window, text=f"Perímetro: {perimeter} cm")
     perimeter_label.pack()
 
-    circularity_label = tk.Label(results_window, text=f"Circularidade: {circularity}")
+    circularity_label = tk.Label(results_window, text=f"Circularidade: {circularity} cm")
     circularity_label.pack()
 
-    compactness_label = tk.Label(results_window, text=f"Compacidade: {compactness}")
+    compactness_label = tk.Label(results_window, text=f"Compacidade: {compactness} cm")
     compactness_label.pack()
 
-    eccentricity_label = tk.Label(results_window, text=f"Excentricidade: {eccentricity}")
+    eccentricity_label = tk.Label(results_window, text=f"Excentricidade: {eccentricity} cm")
     eccentricity_label.pack()
 
-    distance_label = tk.Label(results_window, text=f"Distância para o centro: {distance_to_center}")
+    distance_label = tk.Label(results_window, text=f"Distância para o centro: {distance_to_center} cm")
     distance_label.pack()
 
 # Label para exibir a imagem
@@ -213,6 +264,9 @@ open_button.pack(side=tk.LEFT)
 
 process_button = tk.Button(button_frame, text="Processar Imagem", command=lambda: process_image(show_class=False))
 process_button.pack(side=tk.LEFT)
+
+plot_button = tk.Button(button_frame, text="Gerar Gráfico de Dispersão", command=plot_scatter_graph)
+plot_button.pack(side=tk.LEFT)
 
 # Adiciona um rótulo e uma entrada para permitir que o usuário defina N
 n_label = tk.Label(button_frame, text="Valor de N:")
