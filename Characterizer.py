@@ -41,11 +41,10 @@ class Characterizer:
                         new_x, new_y
                     )
 
-                    # Atualize a tabela de resultados com as informações de cada imagem
-                    self.results_displayer.update_results_table(self.results_displayer.results_table, one_nuclei['nucleus_id'], area, perimeter, circularity, eccentricity, compactness, one_nuclei['nucleus_class'])            
+                    distance_to_center = round(distance_to_center / 100, 4)
 
-                    # Mostra a janela com os resultados
-                    self.results_displayer.show_results_window(area, perimeter, circularity, eccentricity, compactness, distance_to_center)
+                    # Atualize a tabela de resultados com as informações de cada imagem
+                    self.results_displayer.update_results_table(self.results_displayer.results_table, one_nuclei['nucleus_id'], area, perimeter, circularity, eccentricity, compactness, distance_to_center, one_nuclei['nucleus_class'])                                
 
     def calculate_shape_descriptors(self, image):
         # Convertendo a imagem para escala de cinza e binarizando
@@ -82,3 +81,10 @@ class Characterizer:
 
     def calculate_distance(self, x1, y1, x2, y2):
         return round(np.sqrt((x1 - x2)**2 + (y1 - y2)**2), 4)    
+    
+    def setup_results_displayer(self):
+        # Configure o callback de exibição no ResultsDisplayer
+        self.results_displayer.set_display_callback(self.display_results)
+    
+    def display_results(self, area, perimeter, circularity, eccentricity, compactness, distance_to_center):
+        self.results_displayer.show_results_window(area, perimeter, circularity, eccentricity, compactness, distance_to_center)

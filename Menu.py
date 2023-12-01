@@ -11,6 +11,7 @@ class MainApp:
         self.results_display = ResultsDisplayer(root)
         self.segmentor = Segmentor(root, self.image_display, self.results_display, self.image_display.image_path, upload_callback=self.on_image_segmented)
         self.characterizer = Characterizer(root, self.results_display, self.segmentor)
+        self.characterizer.setup_results_displayer()
 
         button_frame = tk.Frame(root)
         button_frame.pack()
