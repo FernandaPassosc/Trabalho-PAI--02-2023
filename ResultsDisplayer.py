@@ -1,10 +1,16 @@
 from tkinter import ttk
 import tkinter as tk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class ResultsDisplayer:
     def __init__(self, root):
         self.root = root         
-        self.results_table = None          
+        self.results_table = None
+
+    def create_buttons(self, button_frame, root):
+        scatter_graph = tk.Button(button_frame, text="Plotar Gráfico de Dispersão", command=self.plot_scatter_graph)
+        scatter_graph.pack(side=tk.RIGHT)              
 
     def create_results_table(self, root):
         columns = ('image_id', 'area', 'perimeter', 'circularity', 'eccentricity', 'compactness', 'distance_center')
@@ -32,9 +38,9 @@ class ResultsDisplayer:
     def set_display_callback(self, callback):
         self.display_callback = callback
 
-    def update_results_table(self, table, image_id, area, perimeter, circularity, eccentricity, compactness, distance_to_center, nucleus_class):
+    def update_results_table(self, image_id, area, perimeter, circularity, eccentricity, compactness, distance_to_center, nucleus_class):
         # Adiciona a classe do núcleo como um item oculto no final
-        table.insert('', tk.END, values=(
+        self.results_table.insert('', tk.END, values=(
             image_id, 
             f"{area:.4f}", 
             f"{perimeter:.4f}", 
@@ -67,3 +73,58 @@ class ResultsDisplayer:
 
         distance_label = tk.Label(results_window, text=f"Distância para o centro: {distance_to_center} cm")
         distance_label.pack()
+    
+    def plot_scatter_graph(self):
+        # Lendo os dados da tabela
+        area_values = []
+        eccentricity_values = []
+        class_colors = {
+            'ASC-US': 'blue',
+            'ASC-H': 'green',
+            'LSIL': 'yellow',
+            'HSIL': 'orange',
+            'SCC': 'red',
+            'Negative for intraepithelial lesion': 'black'
+        }
+        colors = []
+
+        # Certifique-se de que há dados para plotar
+        if not self.results_table.get_children():
+            tk.messagebox.showinfo("Informação", "Não há dados para plotar.")
+            return
+
+        for child in self.results_table.get_children():
+            data = self.results_table.item(child)['values']
+            area_values.append(float(data[1]))
+            eccentricity_values.append(float(data[4]))
+
+            # A classe do núcleo é o oitavo item; os índices começam em 0
+            nucleus_class = data[7]
+            colors.append(class_colors.get(nucleus_class))  # Cor padrão
+
+        fig, ax = plt.subplots(figsize=(8, 6)) 
+
+        # Criando o gráfico de dispersão
+        ax.scatter(area_values, eccentricity_values, c=colors)
+        ax.set_xlabel('Área')
+        ax.set_ylabel('Excentricidade')
+        ax.set_title('Gráfico de Dispersão das Características dos Núcleos')
+
+        # Criando uma legenda para as cores
+        handles = [plt.Line2D([0], [0], marker='o', color=color, label=class_name, linestyle="None") 
+                   for class_name, color in class_colors.items()]
+        # Ajustar a posição da legenda para fora do gráfico
+        ax.legend(handles=handles, title="Classes de Núcleos", loc='upper left', bbox_to_anchor=(1, 1), fontsize = 'small')
+        
+        # Ajustar os limites do eixo e a posição da legenda
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+        # Criando uma nova janela para exibir o gráfico
+        graph_window = tk.Toplevel(self.root)
+        graph_window.title("Gráfico de Dispersão")
+
+        canvas = FigureCanvasTkAgg(fig, master=graph_window)
+        canvas.draw()
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack()

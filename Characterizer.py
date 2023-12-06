@@ -29,8 +29,8 @@ class Characterizer:
                 area, perimeter, circularity, eccentricity, compactness = self.calculate_shape_descriptors(img)
 
                 if area is not None and perimeter is not None:
-                    print(f"Imagem: {one_nuclei['nucleus_path']}")
-                    print(f"Área: {area} milímetros, Perímetro: {perimeter} milímetros, Circularidade: {circularity}, Excentricidade: {eccentricity}, Compacidade: {compactness}")
+                    #print(f"Imagem: {one_nuclei['nucleus_path']}")
+                    #print(f"Área: {area} milímetros, Perímetro: {perimeter} milímetros, Circularidade: {circularity}, Excentricidade: {eccentricity}, Compacidade: {compactness}")
                     
                     # Aqui, assumindo que você quer calcular a distância para o centro da imagem
                     new_x = img.width // 2
@@ -44,7 +44,7 @@ class Characterizer:
                     distance_to_center = round(distance_to_center / 100, 4)
 
                     # Atualize a tabela de resultados com as informações de cada imagem
-                    self.results_displayer.update_results_table(self.results_displayer.results_table, one_nuclei['nucleus_id'], area, perimeter, circularity, eccentricity, compactness, distance_to_center, one_nuclei['nucleus_class'])                                
+                    self.results_displayer.update_results_table(one_nuclei['nucleus_id'], area, perimeter, circularity, eccentricity, compactness, distance_to_center, one_nuclei['nucleus_class'])                                
 
     def calculate_shape_descriptors(self, image):
         # Convertendo a imagem para escala de cinza e binarizando

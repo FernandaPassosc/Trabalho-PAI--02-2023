@@ -1,9 +1,10 @@
 from PIL import Image, ImageTk
 from tkinter import filedialog
 import tkinter as tk
+from tkinter import ttk
 
 class ImageDisplay:
-    def __init__(self, root, upload_callback=None):
+    def __init__(self, root, upload_callback=None, rect_size_callback=None):
         self.root = root
         self.image_path = None
         self.image_label = tk.Label(root)
@@ -11,16 +12,24 @@ class ImageDisplay:
         self.zoom_slider = None
         self.rect_size_entry = None
         self.upload_callback = upload_callback
+        self.rect_size_callback = rect_size_callback  # Novo callback para o tamanho do retângulo
         self.N = 100
 
     def create_buttons(self, button_frame, root):
         open_button = tk.Button(button_frame, text="Abrir Imagem", command=self.open_image)
         open_button.pack(side=tk.LEFT)
 
-        # Configuração do slider de zoom
-        self.zoom_slider = tk.Scale(root, from_=0.1, to=2.0, orient=tk.HORIZONTAL, resolution=0.1, command=self.update_zoom)
-        self.zoom_slider.set(1.0)  # Define o valor inicial do zoom
+        style = ttk.Style(root)
+        style.configure("Zoom.TScale", sliderlength=20, troughcolor="#f0f0f0", background="#0078D7")
+
+        # Criar o slider de zoom com estilo personalizado
+        self.zoom_slider = tk.Scale(root, from_=0.1, to=2.0, orient="horizontal", resolution=0.1, command=self.update_zoom)
+        self.zoom_slider.set(1.0)
         self.zoom_slider.pack()
+
+        # Adicionar rótulo para mostrar o valor atual do zoom
+        self.zoom_label = tk.Label(root, text=f"Zoom: {self.zoom_slider.get()}x")
+        self.zoom_label.pack()
 
         update_button = tk.Button(button_frame, text="Atualizar", command=self.update_rect_size)
         update_button.pack(side=tk.RIGHT)
@@ -63,20 +72,24 @@ class ImageDisplay:
         self.image_label.image = tk_image
         self.image_label.pack(expand=True)
 
-    def update_zoom(self, zoom):
-        zoom_level = self.zoom_slider.get()
+    def update_zoom(self, zoom_value):
+        zoom_level = float(zoom_value)  # Convert the zoom_value to a float
         if self.image_path:
             img = Image.open(self.image_path)
             self.display_image(img, zoom=zoom_level)
     
-    def update_rect_size(self):        
+    def update_rect_size(self):
         # Obtém o valor da entrada
         new_N = int(self.rect_size_entry.get())
 
         if self.image_path and new_N > 0:
-            N = new_N
-            image = Image.open(self.image_path)
-            self.process_image()
+            self.N = new_N  # Atualiza o valor de N
+            self.on_rect_size_change()  # Chama o novo callback
+
+    def on_rect_size_change(self):
+        # Chama o novo callback com a informação necessária
+        if self.rect_size_callback:
+            self.rect_size_callback(self.N)
 
     def on_upload_complete(self):
         # Chama o callback com a informação necessária
