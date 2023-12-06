@@ -38,8 +38,10 @@ class Segmentor:
         # Leitura da imagem
         img = Image.open(self.img_path)
 
+        image_to_draw = img.copy()
+
         # Desenhando retângulos na imagem original
-        draw = ImageDraw.Draw(img)
+        draw = ImageDraw.Draw(image_to_draw)
         drawn_rectangles = []
 
         font = font = ImageFont.truetype("arial.ttf", 20)
@@ -112,15 +114,15 @@ class Segmentor:
                     text_position = (right + 5, top)  # Ajuste a posição conforme necessário
                     draw.text(text_position, str(self.nucleus_id), fill="red", font=font)
         
-        img.save(f"./image-{self.image_id}-rects.png")
+        image_to_draw.save(f"./image-{self.image_id}-rects.png")
 
         self.img_path = f"image-{self.image_id}-rects.png"
 
-        self.image_display.display_image(img)
-
+        self.image_display.display_image(image_to_draw)
+        
         self.on_segmentation_complete()
 
-        return img, self.nuclei
+        return image_to_draw, self.nuclei
 
     def on_segmentation_complete(self):
         # Chama o callback com a informação necessária
