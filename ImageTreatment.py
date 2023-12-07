@@ -9,12 +9,12 @@ class ImageDisplay:
         self.image_path = None
         self.image_label = tk.Label(root)
         self.image_label.pack()
-        self.rect_size_entry = None
         self.upload_callback = upload_callback
         self.rect_size_callback = rect_size_callback  # Novo callback para o tamanho do retângulo
         self.N = 100
         self.zoom_factor = 1.0 
         self.open_img = None
+        self.rect_size_entry = None
 
     def create_buttons(self, menu_frame, root):
         self.open_img = Image.open("picture.jpeg")
@@ -49,10 +49,10 @@ class ImageDisplay:
         )
         update_button.grid(row=6, column=0, pady=5, sticky='n', columnspan=2)
 
-        rect_size_entry = tk.Entry(menu_frame, textvariable=self.N, width=5, background="#FEDBDC")
-        rect_size_entry.grid(row=2, column=1, pady=5, sticky='e')
+        self.rect_size_entry = tk.Entry(menu_frame, textvariable=self.N, width=5, background="#FEDBDC")
+        self.rect_size_entry.grid(row=2, column=1, pady=5, sticky='e')
 
-        rect_size_label = tk.Label(menu_frame, text="Tamanho dos Retângulos:", width=30, background="#FEDBDC", foreground="black", image=self.size_img)
+        rect_size_label = tk.Label(menu_frame, text="Tamanho dos Retângulos", width=30, background="#FEDBDC", foreground="black")
         rect_size_label.grid(row=2, column=0, pady=5, sticky='w')
 
         self.root.bind("<MouseWheel>", self.zoomer)  # Vincula o evento do mouse para simular o zoom
@@ -124,12 +124,14 @@ class ImageDisplay:
             self.display_image(img)
 
     def update_rect_size(self):
-        # Obtém o valor da entrada
-        new_N = int(self.rect_size_entry.get())
-
-        if self.image_path and new_N > 0:
-            self.N = new_N  # Atualiza o valor de N
-            self.on_rect_size_change()  # Chama o novo callback
+        try:
+            new_N = int(self.rect_size_entry.get())  # Convert entry value to integer
+            if new_N > 0:
+                self.N = new_N
+                self.on_rect_size_change()
+        except ValueError:
+            # Handle non-numeric input
+            print("Please enter a valid number for rectangle size")
 
     def on_rect_size_change(self):
         # Chama o novo callback com a informação necessária

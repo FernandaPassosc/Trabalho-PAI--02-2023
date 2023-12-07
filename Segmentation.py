@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 
 N = 100  # Valor padrão de N
+
 class Segmentor:
     def __init__(self, root, image_display, results_display, img_path, upload_callback=None):
         self.root = root
