@@ -93,5 +93,5 @@ class Characterizer:
         # Configure o callback de exibição no ResultsDisplayer
         self.results_displayer.set_display_callback(self.display_results)
     
-    def display_results(self, area, perimeter, circularity, eccentricity, compactness, distance_to_center):
-        self.results_displayer.show_results_window(area, perimeter, circularity, eccentricity, compactness, distance_to_center)
+    def display_results(self, area, perimeter, circularity, eccentricity, compactness, distance_to_center, nucleus_class):
+        self.results_displayer.show_results_window(area, perimeter, circularity, eccentricity, compactness, distance_to_center, nucleus_class)

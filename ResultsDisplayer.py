@@ -26,7 +26,7 @@ class ResultsDisplayer:
         scatter_graph.grid(row=8, column=0, pady=5, sticky='n')             
 
     def create_results_table(self, root):
-        columns = ('image_id', 'area', 'perimeter', 'circularity', 'eccentricity', 'compactness', 'distance_center')
+        columns = ('image_id', 'area', 'perimeter', 'circularity', 'eccentricity', 'compactness', 'distance_center', 'nucleus_class')
 
         self.results_table = ttk.Treeview(root, columns=columns, show='headings')
         self.results_table.bind("<ButtonRelease-1>", self.on_table_click)
@@ -38,6 +38,7 @@ class ResultsDisplayer:
         self.results_table.heading('eccentricity', text='Excentricidade')
         self.results_table.heading('compactness', text='Compacidade')
         self.results_table.heading('distance_center', text='Distance Until Center')
+        self.results_table.heading('nucleus_class', text='Nucleus Class')
 
         return self.results_table
     
@@ -46,7 +47,7 @@ class ResultsDisplayer:
         selected_item = self.results_table.focus()
         item_values = self.results_table.item(selected_item, "values")
 
-        self.display_callback(item_values[1], item_values[2], item_values[3], item_values[4], item_values[5], item_values[6])
+        self.display_callback(item_values[1], item_values[2], item_values[3], item_values[4], item_values[5], item_values[6], item_values[7])
     
     def set_display_callback(self, callback):
         self.display_callback = callback
@@ -64,7 +65,7 @@ class ResultsDisplayer:
             nucleus_class  # Classe do núcleo
         ))
 
-    def show_results_window(self, area, perimeter, circularity, eccentricity, compactness, distance_to_center):
+    def show_results_window(self, area, perimeter, circularity, eccentricity, compactness, distance_to_center, nucleus_class):
         results_window = tk.Toplevel(self.root)
         
         results_window.title("Resultados")
@@ -85,6 +86,9 @@ class ResultsDisplayer:
         compactness_label.pack()
 
         distance_label = tk.Label(results_window, text=f"Distância para o centro: {distance_to_center} cm")
+        distance_label.pack()
+
+        distance_label = tk.Label(results_window, text=f"Nucleus Class: {nucleus_class}")
         distance_label.pack()
     
     def plot_scatter_graph(self):
