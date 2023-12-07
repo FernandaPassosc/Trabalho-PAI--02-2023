@@ -11,14 +11,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 img_class = None
 N = 100  # Valor padrão de N
 
-def calculate_shape_descriptors(image):
-    # Convertendo a imagem para escala de cinza e binarizando
-    gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
-    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
-
-    # Encontrando contornos
-    contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
+def calculate_shape_descriptors(contours):    
     # Calculando descritores para o maior contorno (assumindo ser o núcleo)
     if contours:
         contour = max(contours, key=cv2.contourArea)
@@ -85,6 +78,7 @@ def process_image(img_path):
                 thresholded = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
 
                 contours, _ = cv2.findContours(thresholded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
                 if contours:
                     largest_contour = max(contours, key=cv2.contourArea)
                     mask = np.zeros_like(gray)
@@ -92,6 +86,7 @@ def process_image(img_path):
 
                     # Aplicando a máscara na imagem original recortada
                     segmented_image = np.zeros_like(cropped_img_np)
+                    
                     for i in range(3):  # Aplicar a máscara em cada canal de cor
                         segmented_image[:,:,i] = cropped_img_np[:,:,i] & mask
 
@@ -101,10 +96,11 @@ def process_image(img_path):
                     cv2.imwrite(segmented_path, cv2.cvtColor(segmented_image, cv2.COLOR_RGB2BGR))
                     
                     # Calcular descritores de forma
-                    area, perimeter, circularity, eccentricity, compactness = calculate_shape_descriptors(cropped_img)
+                    area, perimeter, circularity, eccentricity, compactness = calculate_shape_descriptors(contours)
                 
                     if area is not None and perimeter is not None:
                         print(f"Área: {area} milímetros, Perímetro: {perimeter} milímetros, Circularidade: {circularity}, Excentricidade: {eccentricity}, Compacidade: {compactness}")
+                        print(f"{nucleus_id}/12.229.511")
 
                         nuclei_data.append({
                             "image_id": image_id,

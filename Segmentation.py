@@ -65,9 +65,10 @@ class Segmentor:
                     'nucleus_id': self.nucleus_id,
                     'nucleus_x': self.nucleus_x,
                     'nucleus_y': self.nucleus_y,
-                    'nucleus_path': f"{self.img_class}/{self.nucleus_id}.png",
+                    'nucleus_path': f"{self.img_class}/{self.nucleus_id}-segmented.png",
                     'nucleus_class': self.img_class,
-                    'image_id': self.image_id
+                    'image_id': self.image_id,
+                    'nucleus_contour': None
                 })
 
                 self.cropped_img = img.crop((left, top, right, bottom))
@@ -76,30 +77,34 @@ class Segmentor:
                 # Carregar a imagem
                 image = cv2.imread(f"{self.img_class}/{self.nucleus_id}.png")
 
+                image = np.array(image)
+                
                 # Converter para escala de cinza
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-                # Aplicar suavização para reduzir o ruído
-                gray = cv2.GaussianBlur(gray, (5, 5), 0)
 
-                # Limiarização adaptativa
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                gray = cv2.GaussianBlur(gray, (5, 5), 0)
                 thresholded = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
 
-                # Encontrar contornos
                 contours, _ = cv2.findContours(thresholded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-                # Assumindo que queremos o maior contorno, que deve ser o núcleo
-                largest_contour = max(contours, key=cv2.contourArea)
+                if contours:
+                    largest_contour = max(contours, key=cv2.contourArea)
+                    mask = np.zeros_like(gray)
+                    cv2.drawContours(mask, [largest_contour], -1, 255, -1)
 
-                # Criar uma máscara para o maior contorno
-                mask = np.zeros_like(gray)
-                cv2.drawContours(mask, [largest_contour], -1, (255), thickness=cv2.FILLED)
+                    # Aplicando a máscara na imagem original recortada
+                    segmented_image = np.zeros_like(image)
+                    for i in range(3):  # Aplicar a máscara em cada canal de cor
+                        segmented_image[:,:,i] = image[:,:,i] & mask
 
-                # Aplicar a máscara criando uma imagem segmentada
-                segmented_image = cv2.bitwise_and(image, image, mask=mask)
+                    # Salvar a imagem segmentada
+                    segmented_path = os.path.join(self.img_class, f"{self.nucleus_id}-segmented.png")
 
-                # Salvar a imagem segmentada
-                cv2.imwrite(f"{self.img_class}/{self.nucleus_id}-segmented.png", segmented_image)
+                    cv2.imwrite(segmented_path, cv2.cvtColor(segmented_image, cv2.COLOR_RGB2BGR))            
+
+                self.nuclei[-1]['nucleus_contour'] = contours                
 
                 # Verificando se há sobreposição com retângulos já desenhados
                 overlap = any(

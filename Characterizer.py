@@ -25,8 +25,9 @@ class Characterizer:
         for one_nuclei in self.nuclei:
             # Carrega a imagem do caminho especificado
             with Image.open(one_nuclei['nucleus_path']) as img:
+                contours = one_nuclei['nucleus_contour']
                 # Calcular descritores de forma para cada imagem
-                area, perimeter, circularity, eccentricity, compactness = self.calculate_shape_descriptors(img)
+                area, perimeter, circularity, eccentricity, compactness = self.calculate_shape_descriptors(contours)
 
                 if area is not None and perimeter is not None:
                     #print(f"Imagem: {one_nuclei['nucleus_path']}")
@@ -46,14 +47,7 @@ class Characterizer:
                     # Atualize a tabela de resultados com as informações de cada imagem
                     self.results_displayer.update_results_table(one_nuclei['nucleus_id'], area, perimeter, circularity, eccentricity, compactness, distance_to_center, one_nuclei['nucleus_class'])                                
 
-    def calculate_shape_descriptors(self, image):
-        # Convertendo a imagem para escala de cinza e binarizando
-        gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
-        _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
-
-        # Encontrando contornos
-        contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
+    def calculate_shape_descriptors(self, contours):
         # Calculando descritores para o maior contorno (assumindo ser o núcleo)
         if contours:
             contour = max(contours, key=cv2.contourArea)
