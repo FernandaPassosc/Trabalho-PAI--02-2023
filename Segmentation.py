@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import tkinter as tk
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 import cv2
 import numpy as np
 
@@ -21,10 +21,23 @@ class Segmentor:
         self.nucleus_y = None
         self.N = N
         self.nuclei = []
+        self.segment_img=None
 
-    def create_buttons(self, button_frame, root):
-        process_button = tk.Button(button_frame, text="Segmentar Núcleos", command=self.detect_and_draw_rectangles)
-        process_button.pack(side=tk.LEFT)        
+    def create_buttons(self, menu_frame, root):
+        self.segment_img = Image.open("segment.jpeg")
+        self.segment_img = self.segment_img.resize((20, 20))
+        self.segment_img = ImageTk.PhotoImage(self.segment_img)
+
+        process_button = tk.Button(
+            menu_frame,
+            text="Segmentar Núcleos",
+            command=self.detect_and_draw_rectangles,
+            background="#FEDBDC",
+            activebackground="#FADCD2",
+            image=self.segment_img,
+            compound=tk.LEFT  # Place the image to the left of the text
+        )
+        process_button.grid(row=1, column=0, pady=5, sticky='n', columnspan=2)
 
         # Passando o parâmetro root ao criar a tabela de resultados
         results_table = self.results_display.create_results_table(root)
@@ -123,7 +136,7 @@ class Segmentor:
 
         self.img_path = f"image-{self.image_id}-rects.png"
 
-        self.image_display.display_image(image_to_draw)
+        self.image_display.display_image_with_rects(image_to_draw)
         
         self.on_segmentation_complete()
 

@@ -2,15 +2,28 @@ from tkinter import ttk
 import tkinter as tk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from PIL import Image, ImageTk
 
 class ResultsDisplayer:
     def __init__(self, root):
         self.root = root         
         self.results_table = None
+        self.plot_img=None
 
-    def create_buttons(self, button_frame, root):
-        scatter_graph = tk.Button(button_frame, text="Plotar Gráfico de Dispersão", command=self.plot_scatter_graph)
-        scatter_graph.pack(side=tk.RIGHT)              
+    def create_buttons(self, menu_frame, root):
+        self.plot_img = Image.open("plot-graph.jpeg")
+        self.plot_img = self.plot_img.resize((20, 20))
+        self.plot_img = ImageTk.PhotoImage(self.plot_img)
+
+        scatter_graph = tk.Button(
+            menu_frame,
+            text="Plotar Gráfico de Dispersão",
+            command=self.plot_scatter_graph,
+            background="#FEDBDC",
+            image=self.plot_img,
+            compound=tk.LEFT  # Place the image to the left of the text
+        )
+        scatter_graph.grid(row=8, column=0, pady=5, sticky='n')             
 
     def create_results_table(self, root):
         columns = ('image_id', 'area', 'perimeter', 'circularity', 'eccentricity', 'compactness', 'distance_center')
