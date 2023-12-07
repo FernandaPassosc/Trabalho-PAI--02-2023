@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import tkinter as tk
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 import cv2
 import numpy as np
 
@@ -22,12 +22,16 @@ class Segmentor:
         self.N = N
         self.nuclei = []
 
-    def create_buttons(self, button_frame, root):
-        process_button = tk.Button(button_frame, text="Segmentar Núcleos", command=self.detect_and_draw_rectangles)
-        process_button.pack(side=tk.LEFT)        
+    def create_buttons(self, menu_frame, root):
+        segment_img = Image.open("table.jpeg")
+        segment_img = segment_img.resize((20, 20))
+        segment_img = ImageTk.PhotoImage(segment_img)
+        process_button = tk.Button(menu_frame, text="Segmentar Núcleos", command=self.detect_and_draw_rectangles, background="#FEDBDC", activebackground="#FADCD2", image=segment_img)
+        process_button.grid(row=1, column=0, pady=5, sticky='n', columnspan=2) 
 
         # Passando o parâmetro root ao criar a tabela de resultados
         results_table = self.results_display.create_results_table(root)
+
 
         results_table.pack(fill=tk.BOTH, expand=True)
 

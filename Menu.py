@@ -14,14 +14,14 @@ class MainApp:
         self.characterizer = Characterizer(root, self.results_display, self.segmentor)
         self.characterizer.setup_results_displayer()
 
-        button_frame = tk.Frame(root)
-        button_frame.pack()
+        menu_frame = tk.LabelFrame(root, text='Menu de Opções', labelanchor='n', padx=10, background="pink")
+        menu_frame.pack(pady=20)
 
         # Agora, cada classe é responsável por criar seus próprios botões
-        self.image_display.create_buttons(button_frame, root)
-        self.segmentor.create_buttons(button_frame, root)
-        self.characterizer.create_buttons(button_frame, root)
-        self.results_display.create_buttons(button_frame, root)
+        self.image_display.create_buttons(menu_frame, root)
+        self.segmentor.create_buttons(menu_frame, root)
+        self.characterizer.create_buttons(menu_frame, root)
+        self.results_display.create_buttons(menu_frame, root)
     
     def on_image_uploaded(self):
         # Método chamado após o upload da imagem

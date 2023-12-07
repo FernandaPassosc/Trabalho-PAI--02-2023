@@ -2,7 +2,7 @@ import tkinter as tk
 from ResultsDisplayer import ResultsDisplayer
 import cv2
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageTk
 
 class Characterizer:
     def __init__(self, root, results_displayer, segmentor):
@@ -17,9 +17,12 @@ class Characterizer:
         n_var = tk.StringVar()
         n_var.set(str(100))  # Inicializa o widget de entrada com o valor padrão
 
-    def create_buttons(self, button_frame, root):
-        characterize_button = tk.Button(button_frame, text="Caracterizar Núcleos", command=self.characterize)
-        characterize_button.pack(side=tk.LEFT)          
+    def create_buttons(self, menu_frame, root):
+        table_img = Image.open("table.jpeg")
+        table_img = table_img.resize((20, 20))
+        table_img = ImageTk.PhotoImage(table_img)
+        characterize_button = tk.Button(menu_frame, text="Caracterizar Núcleos", command=self.characterize, background="#FEDBDC", activebackground="#FADCD2", image=table_img)
+        characterize_button.grid(row=7, column=0, pady=5, sticky='n', columnspan=2)        
 
     def characterize(self):
         for one_nuclei in self.nuclei:

@@ -9,36 +9,39 @@ class ImageDisplay:
         self.image_path = None
         self.image_label = tk.Label(root)
         self.image_label.pack()
-        self.zoom_slider = None
         self.rect_size_entry = None
         self.upload_callback = upload_callback
         self.rect_size_callback = rect_size_callback  # Novo callback para o tamanho do retângulo
         self.N = 100
+        self.zoom_factor = 1.0 
 
-    def create_buttons(self, button_frame, root):
-        open_button = tk.Button(button_frame, text="Abrir Imagem", command=self.open_image)
-        open_button.pack(side=tk.LEFT)
+    def create_buttons(self, menu_frame, root):
+        open_img = Image.open("picture.jpeg")
+        open_img = open_img.resize((20, 20))  # Ajuste o tamanho conforme necessário
+        open_img = ImageTk.PhotoImage(open_img)
 
-        style = ttk.Style(root)
-        style.configure("Zoom.TScale", sliderlength=20, troughcolor="#f0f0f0", background="#0078D7")
+        update_img = Image.open("image-update.jpeg")
+        update_img = update_img.resize((20, 20))
+        update_img = ImageTk.PhotoImage(update_img)
 
-        # Criar o slider de zoom com estilo personalizado
-        self.zoom_slider = tk.Scale(root, from_=0.1, to=2.0, orient="horizontal", resolution=0.1, command=self.update_zoom)
-        self.zoom_slider.set(1.0)
-        self.zoom_slider.pack()
+        size_img = Image.open("size.jpeg")
+        size_img = size_img.resize((20, 20))
+        size_img = ImageTk.PhotoImage(size_img)
+        
+        open_button = tk.Button(menu_frame, text="Abrir Imagem", command=self.open_image, background="#FEDBDC", foreground="black", activebackground="#FADCD2", image=open_img)
+        open_button.grid(row=0, column=0, pady=5, sticky='n', columnspan=2)
 
-        # Adicionar rótulo para mostrar o valor atual do zoom
-        self.zoom_label = tk.Label(root, text=f"Zoom: {self.zoom_slider.get()}x")
-        self.zoom_label.pack()
+        update_button = tk.Button(menu_frame, text="Atualizar", command=self.update_rect_size,  background="#FEDBDC",  foreground="black", activebackground="#FADCD2", image=update_img)
+        update_button.grid(row=6, column=0, pady=5, sticky='n', columnspan=2)
 
-        update_button = tk.Button(button_frame, text="Atualizar", command=self.update_rect_size)
-        update_button.pack(side=tk.RIGHT)
+        rect_size_entry = tk.Entry(menu_frame, textvariable=self.N, width=5, background="#FEDBDC")
+        rect_size_entry.grid(row=2, column=1, pady=5, sticky='e')
 
-        self.rect_size_entry = tk.Entry(button_frame, textvariable = self.N)
-        self.rect_size_entry.pack(side=tk.RIGHT)
+        rect_size_label = tk.Label(menu_frame, text="Tamanho dos Retângulos:", width=30, background="#FEDBDC", foreground="black", image=size_img)
+        rect_size_label.grid(row=2, column=0, pady=5, sticky='w')
 
-        rect_size_label = tk.Label(button_frame, text="Tamanho dos Retângulos:")
-        rect_size_label.pack(side=tk.RIGHT)
+
+        self.root.bind("<MouseWheel>", self.zoomer)  # Vincula o evento do mouse para simular o zoom
 
     def open_image(self):
         file_path = filedialog.askopenfilename(filetypes=[("Image files", ".png;.jpg")])
@@ -54,30 +57,44 @@ class ImageDisplay:
             self.display_image(img)
             self.on_upload_complete()
 
-    def display_image(self, image, zoom=1):
-        max_size = 700  # Tamanho máximo para largura e altura
-        width, height = image.size
+    def display_image(self, image):
+        # Redimensiona a imagem somente quando ela é carregada pela primeira vez
+        if not hasattr(self, 'original_image'):
+            width, height = image.size
+            if width > 500 or height > 500:
+                image.thumbnail((500, 500))
 
-        # Redimensionar a imagem para manter a proporção e limitar ao tamanho máximo
-        ratio = min(max_size/width, max_size/height)
-        new_width, new_height = int(width * ratio), int(height * ratio)
-        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            self.original_image = image
 
-        # Aplicar zoom à imagem redimensionada
-        zoomed_width, zoomed_height = int(new_width * zoom), int(new_height * zoom)
-        zoomed_image = resized_image.resize((zoomed_width, zoomed_height), Image.Resampling.LANCZOS)
+        # Redimensionar a imagem de acordo com o fator de zoom
+        width, height = self.original_image.size
+        new_width = int(width * self.zoom_factor)
+        new_height = int(height * self.zoom_factor)
+        resized_image = self.original_image.resize((new_width, new_height))
 
-        tk_image = ImageTk.PhotoImage(zoomed_image)
+        tk_image = ImageTk.PhotoImage(resized_image)
         self.image_label.config(image=tk_image)
         self.image_label.image = tk_image
-        self.image_label.pack(expand=True)
 
-    def update_zoom(self, zoom_value):
-        zoom_level = float(zoom_value)  # Convert the zoom_value to a float
+    def zoomer(self, event):
+        # A função que simula o zoom do touchpad
+        if event.delta > 0:
+            self.zoom_in()
+        elif event.delta < 0:
+            self.zoom_out()
+
+    def zoom_in(self):
+        self.zoom_factor *= 1.1  # Aumentar o fator de zoom
         if self.image_path:
             img = Image.open(self.image_path)
-            self.display_image(img, zoom=zoom_level)
-    
+            self.display_image(img)
+
+    def zoom_out(self):
+        self.zoom_factor *= 0.9  # Reduzir o fator de zoom
+        if self.image_path:
+            img = Image.open(self.image_path)
+            self.display_image(img)
+
     def update_rect_size(self):
         # Obtém o valor da entrada
         new_N = int(self.rect_size_entry.get())
@@ -98,6 +115,3 @@ class ImageDisplay:
 
     def get_image_path(self):
         return self.image_path
-    
-    def get_zoom_slider(self):
-        return self.zoom_slider
